@@ -62,13 +62,24 @@ public class WaptPro extends Recorder {
     }
     
     private static void writeFile(ArrayList<String> lines, File path) throws IOException {
-        BufferedWriter bw = new BufferedWriter(new FileWriter(path));
-        for (int i = 0; i < lines.size(); i++) {
-            bw.write(lines.get(i));
-            bw.newLine();
+        final OutputStream is = new FileOutputStream(path);
+        
+        try{
+            final Writer r = new OutputStreamWriter(is, "UTF-8");
+
+            BufferedWriter bw = new BufferedWriter(r);
+            for (int i = 0; i < lines.size(); i++) {
+                bw.write(lines.get(i));
+                bw.newLine();
+            }
+            bw.close();
+        }finally {
+            try {
+                is.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-        bw.close();
-        return;
     }
 
     public ArrayList<String> readFile(String filePath) throws java.io.FileNotFoundException,
@@ -78,7 +89,7 @@ public class WaptPro extends Recorder {
         try {
             final InputStream is = this.getClass().getResourceAsStream(filePath);
             try {
-                final Reader r = new InputStreamReader(is);
+                final Reader r = new InputStreamReader(is, "UTF-8");
                 try {
                     final BufferedReader br = new BufferedReader(r);
                     try {
@@ -129,16 +140,35 @@ public class WaptPro extends Recorder {
     }
     
     protected ArrayList<String> readLines(String filename) throws IOException 
-    {
-        FileReader fileReader = new FileReader(filename);
-        BufferedReader bufferedReader = new BufferedReader(fileReader);
+    {  
         ArrayList<String> lines = new ArrayList<String>();
-        String line = null;
-        while ((line = bufferedReader.readLine()) != null)
-        {
-            lines.add(line);
+        
+        try {
+            final InputStream is = new FileInputStream(filename);
+        
+            try{
+                final Reader r = new InputStreamReader(is, "UTF-8");
+
+                BufferedReader bufferedReader = new BufferedReader(r);
+
+                String line = null;
+                while ((line = bufferedReader.readLine()) != null)
+                {
+                    lines.add(line);
+                }
+                bufferedReader.close();
+            } finally {
+                try {
+                    is.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        } catch (IOException e) {
+            // failure
+            e.printStackTrace();
         }
-        bufferedReader.close();
+        
         return lines;
     }
     
@@ -241,7 +271,7 @@ public class WaptPro extends Recorder {
 //            listener.getLogger().println("WAPT Pro Plugin > Archiving at " + levelString + " level " + archiveDir + " to " + targetDir);
             
             // Add the JS to change the link as appropriate.
-            String hudsonUrl = Hudson.getInstance().getRootUrl();
+            String hudsonUrl = Hudson.getActiveInstance().getRootUrl();
             AbstractProject job = build.getProject();
             reportLines.add("<script type=\"text/javascript\">document.getElementById(\"hudson_link\").innerHTML=\"Back to " + job.getName() + "\";</script>");
             // If the URL isn't configured in Hudson, the best we can do is attempt to go Back.

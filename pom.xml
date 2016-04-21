@@ -4,9 +4,9 @@
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>1.424</version>
+    <version>2.3</version>
   </parent>
-  
+
   <licenses>
     <license>
       <name>Apache License, Version 2.0</name>
@@ -64,6 +64,15 @@
             <url>http://repo.jenkins-ci.org/public/</url>
         </pluginRepository>
     </pluginRepositories>
+    
+    <dependencies>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>matrix-project</artifactId>
+            <version>1.6</version>
+        </dependency>
+    </dependencies>
+       
 </project>  
   
 

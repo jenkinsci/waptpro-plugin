@@ -38,11 +38,11 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 public class WaptProTarget extends AbstractDescribableImpl<WaptProTarget> 
 {
-    private final String reportName = "WAPT Pro Report";
+    private final static String reportName = "WAPT Pro Report";
     private final String reportsFolder;
     private final String reportFiles;
     private final boolean checkTestResult;
-    private final String wrapperName = "index.html";
+    private final static String wrapperName = "index.html";
 
     public WaptProTarget(String reportsFolder, String reportFiles, boolean checkTestResult) 
     {
