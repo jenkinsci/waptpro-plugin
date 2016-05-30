@@ -20,10 +20,17 @@
   <version>1.0</version>
   <name>WAPT Pro plugin</name>
   <url>http://wiki.jenkins-ci.org/display/JENKINS/WAPT+Pro+plugin</url>
+
+  <organization>
+      <name>SoftLogica</name>
+      <url>http://www.loadtestingtool.com/</url>
+  </organization>
+
   <developers>
       <developer>
-          <id>softlogica</id>
-          <name>Softlogica</name>
+          <id>waptpro</id>
+          <name>SoftLogica</name>
+          <email>support@loadtestingtool.com</email>
       </developer>
   </developers>
 
