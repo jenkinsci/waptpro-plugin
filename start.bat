@@ -1,2 +1,2 @@
-mvn release:prepare release:perform
+mvn release:prepare release:perform > log.txt
 
