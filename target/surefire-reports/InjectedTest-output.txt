@@ -1,0 +1,33 @@
+Exploding C:\Users\efimcev\.m2\repository\org\jenkins-ci\main\jenkins-war\1.625.3\jenkins-war-1.625.3-war-for-test.jar into C:\projects\GitHub\waptpro-plugin\target\jenkins-for-test
+Sep 08, 2017 10:06:10 AM org.mortbay.log.Slf4jLog info
+INFO: Logging to org.slf4j.impl.JDK14LoggerAdapter(org.mortbay.log) via org.mortbay.log.Slf4jLog
+Sep 08, 2017 10:06:11 AM org.mortbay.log.Slf4jLog info
+INFO: jetty-6.1.26
+Sep 08, 2017 10:06:11 AM org.mortbay.log.Slf4jLog info
+INFO: NO JSP Support for , did not find org.apache.jasper.servlet.JspServlet
+Sep 08, 2017 10:06:11 AM org.mortbay.log.Slf4jLog info
+INFO: Started SocketConnector@0.0.0.0:59576
+Sep 08, 2017 10:06:11 AM jenkins.InitReactorRunner$1 onAttained
+INFO: Started initialization
+Sep 08, 2017 10:06:34 AM jenkins.InitReactorRunner$1 onAttained
+INFO: Listed all plugins
+Sep 08, 2017 10:06:34 AM jenkins.InitReactorRunner$1 onAttained
+INFO: Prepared all plugins
+Sep 08, 2017 10:06:34 AM jenkins.InitReactorRunner$1 onAttained
+INFO: Started all plugins
+Sep 08, 2017 10:06:34 AM jenkins.InitReactorRunner$1 onAttained
+INFO: Augmented all extensions
+Sep 08, 2017 10:06:38 AM jenkins.InitReactorRunner$1 onAttained
+INFO: Loaded all jobs
+Sep 08, 2017 10:06:40 AM org.jenkinsci.main.modules.sshd.SSHD start
+INFO: Started SSHD at port 59631
+Sep 08, 2017 10:06:40 AM jenkins.InitReactorRunner$1 onAttained
+INFO: Completed initialization
+Sep 08, 2017 10:06:40 AM org.mortbay.log.Slf4jLog info
+INFO: jetty-6.1.26
+Sep 08, 2017 10:06:40 AM org.mortbay.log.Slf4jLog info
+INFO: Started SocketConnector@0.0.0.0:59633
+Sep 08, 2017 10:06:43 AM org.mortbay.log.Slf4jLog info
+INFO: Stopped SocketConnector@0.0.0.0:59576
+WARN: The method class org.apache.commons.logging.impl.SLF4JLogFactory#release() was invoked.
+WARN: Please see http://www.slf4j.org/codes.html#release for an explanation.

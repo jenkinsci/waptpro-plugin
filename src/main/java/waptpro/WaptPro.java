@@ -26,6 +26,7 @@ import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
 import hudson.util.FormValidation;
+import jenkins.tasks.SimpleBuildStep;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -37,14 +38,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class WaptPro extends Recorder {
+public class WaptPro extends Recorder implements SimpleBuildStep {
     private final WaptProTarget reportTarget;
 
     @DataBoundConstructor
     public WaptPro(String reportsFolder, String reportFiles, boolean checkTestResult) {
         this.reportTarget = new WaptProTarget(reportsFolder, reportFiles, checkTestResult);
     }
-    
+          
     public WaptProTarget getReportTarget() {
         return this.reportTarget;
     }
@@ -129,7 +130,7 @@ public class WaptPro extends Recorder {
         return aList;
     }
 
-    protected static String resolveParametersInString(AbstractBuild<?, ?> build, BuildListener listener, String input) {
+    protected static String resolveParametersInString(Run<?, ?> build, TaskListener listener, String input) {
         try {
             return build.getEnvironment(listener).expand(input);
         } catch (Exception e) {
@@ -173,145 +174,85 @@ public class WaptPro extends Recorder {
     }
     
     @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException
+    public void perform(Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException
     {
         listener.getLogger().println("WAPT Pro Plugin > Processing WAPT Pro output files...");
-        
-        // Grab the contents of the header and footer as arrays
-        ArrayList<String> headerLines;
-        ArrayList<String> footerLines;
-        try 
-        {
-            headerLines = this.readFile("/waptpro/WaptPro/header.html");
-            footerLines = this.readFile("/waptpro/WaptPro/footer.html");
-        }
-        catch (FileNotFoundException e1) 
-        {
-            e1.printStackTrace();
-            return false;
-        }
-        catch (IOException e1) 
-        {
-            e1.printStackTrace();
-            return false;
-        }
-        
+            
         {
             // Create an array of lines we will eventually write out, initially the header.
-            ArrayList<String> reportLines = new ArrayList<String>(headerLines);
             WaptProTarget reportTarget = getReportTarget(); 
-
             FilePath targetDir = reportTarget.getArchiveTarget(build);
-
+         
              // The index name might be a comma separated list of names, so let's figure out all the pages we should index.
-            String[] csvReports = resolveParametersInString(build, listener, reportTarget.getReportFiles()).split(",");
-            ArrayList<String> reports = new ArrayList<String>();
-            for (int j=0; j < csvReports.length; j++) 
+            String report = reportTarget.getReportFiles();
+            report = report.trim();          
+
+            if(!report.endsWith(".html"))
             {
-                String report = csvReports[j];
-                report = report.trim();          
+                report += ".html";
+            }
 
-                // Ignore blank report names caused by trailing or double commas.
-                if (report.equals("")) {continue;}
+            if(getCheckTestResult())
+            {                
+                listener.getLogger().println("WAPT Pro Plugin > Check test result in " + targetDir + "\\" + report + " report file");
 
-                if(!report.endsWith(".html"))
+                ArrayList<String> reportStrings;
+                try
                 {
-                    report += ".html";
+                    reportStrings = readLines(targetDir + "\\" + report);
+                }
+                catch(IOException e)
+                {
+                    Util.displayIOException(e, listener);
+                    e.printStackTrace(listener.fatalError("WAPT Pro failure"));
+                    build.setResult(Result.FAILURE);
+                    return;                    
                 }
 
-                reports.add(report);
-
-                reportLines.add("<iframe id=\"myframe\" src=\"" + report + "\" height=\"100%\" width=\"100%\" frameborder=\"0\"></iframe>");
-               
-                if(getCheckTestResult())
-                {                
-                    listener.getLogger().println("WAPT Pro Plugin > Check test result in " + targetDir + "\\" + report + " report file");
-                                    
-                    ArrayList<String> reportStrings;
-                    try
+                boolean resultFound = false;
+                for(int reportStrNum=0; reportStrNum<reportStrings.size(); reportStrNum++)
+                {                  
+                    if(reportStrings.get(reportStrNum).contains("meta name='TestResult' content='FAILURE'"))
                     {
-                        reportStrings = readLines(targetDir + "\\" + report);
-                    }
-                    catch(IOException e)
+                        listener.getLogger().println("WAPT Pro Plugin > Test result is FAILURE");
+                        build.setResult(Result.FAILURE);  
+                        resultFound = true;
+                        break;
+                    }                  
+                    if(reportStrings.get(reportStrNum).contains("meta name='TestResult' content='SUCCESS'"))
                     {
-                        Util.displayIOException(e, listener);
-                        e.printStackTrace(listener.fatalError("WAPT Pro failure"));
-                        build.setResult(Result.FAILURE);
-                        return true;                    
+                        listener.getLogger().println("WAPT Pro Plugin > Test result is SUCCESS");
+                        build.setResult(Result.SUCCESS);
+                        resultFound = true;
+                        break;
                     }
+                }
 
-                    boolean resultFound = false;
-                    for(int reportStrNum=0; reportStrNum<reportStrings.size(); reportStrNum++)
-                    {                  
-                        if(reportStrings.get(reportStrNum).contains("meta name='TestResult' content='FAILURE'"))
-                        {
-                            listener.getLogger().println("WAPT Pro Plugin > Test result is FAILURE");
-                            build.setResult(Result.FAILURE);  
-                            resultFound = true;
-                            break;
-                        }                  
-                        if(reportStrings.get(reportStrNum).contains("meta name='TestResult' content='SUCCESS'"))
-                        {
-                            listener.getLogger().println("WAPT Pro Plugin > Test result is SUCCESS");
-                            build.setResult(Result.SUCCESS);
-                            resultFound = true;
-                            break;
-                        }
-                    }
-
-                    if(!resultFound)
-                    {
-                        listener.getLogger().println("WAPT Pro Plugin > Test result was not found");
-                        build.setResult(Result.FAILURE); 
-                    }
+                if(!resultFound)
+                {
+                    listener.getLogger().println("WAPT Pro Plugin > Test result was not found");
+                    build.setResult(Result.FAILURE); 
                 }
             }
  
 //            String levelString = "BUILD"; 
 //            listener.getLogger().println("WAPT Pro Plugin > Archiving at " + levelString + " level " + archiveDir + " to " + targetDir);
             
-            // Add the JS to change the link as appropriate.
-            String hudsonUrl = Hudson.getActiveInstance().getRootUrl();
-            AbstractProject job = build.getProject();
-            reportLines.add("<script type=\"text/javascript\">document.getElementById(\"hudson_link\").innerHTML=\"Back to " + job.getName() + "\";</script>");
-            // If the URL isn't configured in Hudson, the best we can do is attempt to go Back.
-            if (hudsonUrl == null) 
-            {
-                reportLines.add("<script type=\"text/javascript\">document.getElementById(\"hudson_link\").onclick = function() { history.go(-1); return false; };</script>");
-            } 
-            else 
-            {
-                String jobUrl = hudsonUrl + job.getUrl();
-                reportLines.add("<script type=\"text/javascript\">document.getElementById(\"hudson_link\").href=\"" + jobUrl + "\";</script>");
-            }
-
-            // Now add the footer.
-            reportLines.addAll(footerLines);
-            // And write this as the index
-            try 
-            {
-                reportTarget.handleAction(build);
-                writeFile(reportLines, new File(targetDir.getRemote(), reportTarget.getWrapperName())); 
-            }
-            catch (IOException e) 
-            {
-                e.printStackTrace();
-            }
+            reportTarget.handleAction(build);             
         }
-
-        return true;
     }
 
+    /*
     @Override
     public Collection<? extends Action> getProjectActions(AbstractProject<?, ?> project) 
-    {  
+    {      
         ArrayList<Action> actions = new ArrayList<Action>();
         WaptProTarget target = this.reportTarget; 
 
         actions.add(target.getProjectAction(project));
         if (project instanceof MatrixProject && ((MatrixProject) project).getActiveConfigurations() != null){
             for (MatrixConfiguration mc : ((MatrixProject) project).getActiveConfigurations()){
-                try {
+                try {               
                   mc.onLoad(mc.getParent(), mc.getName());
                 }
                 catch (IOException e){
@@ -322,7 +263,7 @@ public class WaptPro extends Recorder {
 
         return actions;
     }
-
+*/
     @Extension
     public static class DescriptorImpl extends BuildStepDescriptor<Publisher> {
         @Override

@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Group-Id: org.jenkins-ci.plugins
+Short-Name: waptpro
+Long-Name: WAPT Pro plugin
+Url: http://wiki.jenkins-ci.org/display/JENKINS/WAPT+Pro+plugin
+Plugin-Version: 1.2-SNAPSHOT (private-e2cd5298-efimcev)
+Hudson-Version: 1.625.3
+Jenkins-Version: 1.625.3
+Plugin-Dependencies: workflow-step-api:1.14,matrix-project:1.6
+Plugin-Developers: SoftLogica:waptpro:support@loadtestingtool.com
+Libraries: C:\projects\GitHub\waptpro-plugin\src\main\resources,C:\pro
+ jects\GitHub\waptpro-plugin\target\classes
+Resource-Path: C:\projects\GitHub\waptpro-plugin\src\main\webapp
+

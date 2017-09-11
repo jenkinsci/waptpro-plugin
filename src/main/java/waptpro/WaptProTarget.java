@@ -15,22 +15,18 @@
 package waptpro;
 
 import hudson.FilePath;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractItem;
-import hudson.model.AbstractProject;
-import hudson.model.AbstractDescribableImpl;
-import hudson.model.Action;
-import hudson.model.DirectoryBrowserSupport;
-import hudson.model.ProminentProjectAction;
-import hudson.model.Run;
-import hudson.model.Descriptor;
 import hudson.Extension;
-
+import hudson.model.*;
+import jenkins.tasks.SimpleBuildStep;
 
 import java.io.File;
 import java.io.IOException;
 
 import javax.servlet.ServletException;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -83,7 +79,7 @@ public class WaptProTarget extends AbstractDescribableImpl<WaptProTarget>
         return this.wrapperName;
     }
 
-    public FilePath getArchiveTarget(AbstractBuild build) 
+    public FilePath getArchiveTarget(Run build) 
     {
         return new FilePath(getBuildArchiveDir(build));
     }
@@ -100,61 +96,24 @@ public class WaptProTarget extends AbstractDescribableImpl<WaptProTarget>
         return new File(new File(run.getRootDir(), "archive"), this.getSanitizedName());
     }
 
-    protected abstract class BaseWaptAction implements Action 
+    public class WaptAction implements Action
     {
-        private WaptProTarget actualWaptProTarget;
+        private final Job<?, ?> project;
+        public WaptProTarget actualWaptProTarget;       
 
-        public BaseWaptAction(WaptProTarget actualWaptProTarget) 
+        public WaptAction(Job<?, ?> project, WaptProTarget actualWaptProTarget)
         {
             this.actualWaptProTarget = actualWaptProTarget;
-        }
-
-        public String getUrlName() 
-        {
-            return actualWaptProTarget.getSanitizedName();
-        }
-
-        public String getDisplayName() 
-        {
-            String action = actualWaptProTarget.reportName;
-            return dir().exists() ? action : null;
-        }
-
-        public String getIconFileName() 
-        {
-            return dir().exists() ? "/plugin/waptpro/waptpro.png" : null;
-        }
-
-        public void doDynamic(StaplerRequest req, StaplerResponse rsp) throws IOException, ServletException 
-        {
-            DirectoryBrowserSupport dbs = new DirectoryBrowserSupport(this, new FilePath(this.dir()), this.getTitle(), "/plugin/waptpro/waptpro.png", false);
-            dbs.setIndexFileName(WaptProTarget.this.wrapperName); // Hudson >= 1.312
-            dbs.generateResponse(req, rsp, this);
-        }
-
-        protected abstract String getTitle();
-
-        protected abstract File dir();
-    }
-
-    public class WaptAction extends BaseWaptAction implements ProminentProjectAction 
-    {
-        private final AbstractItem project;
-
-        public WaptAction(AbstractItem project, WaptProTarget actualWaptProTarget) 
-        {
-            super(actualWaptProTarget);
             this.project = project;
         }
 
-        @Override
         protected File dir() 
         {
-            if (this.project instanceof AbstractProject) 
+            if (this.project instanceof Job) 
             {
-                AbstractProject abstractProject = (AbstractProject) this.project;
+                Job job = this.project;
 
-                Run run = abstractProject.getLastSuccessfulBuild();
+                Run run = job.getLastSuccessfulBuild();
                 if (run != null) 
                 {
                     File javadocDir = getBuildArchiveDir(run);
@@ -169,47 +128,101 @@ public class WaptProTarget extends AbstractDescribableImpl<WaptProTarget>
             return getProjectArchiveDir(this.project);
         }
 
-        @Override
         protected String getTitle() 
         {
             return this.project.getDisplayName() + " html2";
         }
-    }
 
-    public class WaptBuildAction extends BaseWaptAction 
-    {
-        private final AbstractBuild<?, ?> build;
-
-        public WaptBuildAction(AbstractBuild<?, ?> build, WaptProTarget actualWaptProTarget) 
+        public String getUrlName() 
         {
-            super(actualWaptProTarget);
-            this.build = build;
+            return actualWaptProTarget.getSanitizedName();
+        }
+
+        public String getDisplayName() 
+        {
+            String action = actualWaptProTarget.reportName;
+            return dir().exists() ? action : null;
+        }
+
+        public String getIconFileName()
+        {
+            return dir().exists() ? "/plugin/waptpro/waptpro.png" : null;
         }
         
-        public final AbstractBuild<?,?> getOwner() 
+        public void doDynamic(StaplerRequest req, StaplerResponse rsp) throws IOException, ServletException 
+        {
+            DirectoryBrowserSupport dbs = new DirectoryBrowserSupport(this, new FilePath(this.dir()), this.getTitle(), this.getIconFileName(), false);
+            dbs.setIndexFileName(actualWaptProTarget.getReportFiles()); // Hudson >= 1.312
+            dbs.generateResponse(req, rsp, this);
+        }    
+    }
+
+    public class WaptBuildAction implements Action, SimpleBuildStep.LastBuildAction
+    {
+        private final Run<?, ?> build;
+        private final List<WaptAction> projectActions;
+
+        public WaptBuildAction(Run<?, ?> build, WaptProTarget actualWaptProTarget) 
+        {       
+            this.build = build;
+       
+            List<WaptAction> projectActions = new ArrayList<>();
+            projectActions.add(new WaptAction(build.getParent(), actualWaptProTarget));
+            this.projectActions = projectActions;
+        }
+        
+        public final Run<?,?> getBuild() 
         {
             return build;
         }
 
-        @Override
-        protected String getTitle() 
+        public String getUrlName() 
         {
-            return this.build.getDisplayName() + " html3";
+            return projectActions.get(0).getUrlName();
         }
 
-        @Override
+        public String getDisplayName() 
+        {
+            return projectActions.get(0).getDisplayName();
+        }
+
+        public String getIconFileName() 
+        {
+            return dir().exists() ? "/plugin/waptpro/waptpro.png" : null;
+        }
+        
+        protected String getTitle() 
+        {
+            return this.build.getDisplayName();
+        }
+
         protected File dir() 
         {
             return getBuildArchiveDir(this.build);
         }
+
+        @Override
+        public Collection<? extends Action> getProjectActions() {
+            return this.projectActions;
+        }        
+                
+        public void doDynamic(StaplerRequest req, StaplerResponse rsp) throws IOException, ServletException 
+        {         
+            DirectoryBrowserSupport dbs = new DirectoryBrowserSupport(this, new FilePath(this.dir()), this.getTitle(), this.getIconFileName(), false);
+                    
+            String reportFileName = projectActions.get(0).actualWaptProTarget.getReportFiles();
+                    
+            dbs.setIndexFileName(reportFileName); // Hudson >= 1.312       
+            dbs.generateResponse(req, rsp, this);
+        }  
     }
 
-    public void handleAction(AbstractBuild<?, ?> build) 
+    public void handleAction(Run<?, ?> build) 
     {
         build.addAction(new WaptBuildAction(build, this));
     }
 
-    public Action getProjectAction(AbstractProject project) 
+    public Action getProjectAction(Job project) 
     {
         return new WaptAction(project, this);
     }
