@@ -1,9 +1,0 @@
-<?jelly escape-by-default='true'?>
-<!--
-  This view is used to render the plugin list page.
-
-  Since we don't really have anything dynamic here, let's just use static HTML. 
--->
-<div>
-  This plugin publishes WAPT Pro reports.
-</div>

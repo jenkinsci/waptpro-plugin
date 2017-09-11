@@ -1,9 +1,0 @@
-<?jelly escape-by-default='true'?>
-<!--
-  This view is used to render the plugin side panel.
-
-  We don't really have anything here, This is only a placeholder. 
--->
-<div>
-  This plugin publishes WAPT Pro reports.
-</div>
