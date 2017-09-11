@@ -17,7 +17,7 @@
 
   <artifactId>waptpro</artifactId>
   <packaging>hpi</packaging>
-  <version>1.2-SNAPSHOT</version>
+  <version>1.2</version>
   <name>WAPT Pro plugin</name>
   <url>http://wiki.jenkins-ci.org/display/JENKINS/WAPT+Pro+plugin</url>
 
