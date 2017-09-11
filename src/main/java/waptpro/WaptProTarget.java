@@ -109,19 +109,16 @@ public class WaptProTarget extends AbstractDescribableImpl<WaptProTarget>
 
         protected File dir() 
         {
-            if (this.project instanceof Job) 
+            Job job = this.project;
+
+            Run run = job.getLastSuccessfulBuild();
+            if (run != null) 
             {
-                Job job = this.project;
+                File javadocDir = getBuildArchiveDir(run);
 
-                Run run = job.getLastSuccessfulBuild();
-                if (run != null) 
+                if (javadocDir.exists()) 
                 {
-                    File javadocDir = getBuildArchiveDir(run);
-
-                    if (javadocDir.exists()) 
-                    {
-                        return javadocDir;
-                    }
+                    return javadocDir;
                 }
             }
 
