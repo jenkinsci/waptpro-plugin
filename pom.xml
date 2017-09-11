@@ -38,7 +38,7 @@
       <connection>scm:git:git://github.com/jenkinsci/waptpro-plugin.git</connection>
       <developerConnection>scm:git:git@github.com:jenkinsci/waptpro-plugin.git</developerConnection>
       <url>https://github.com/jenkinsci/waptpro-plugin</url>
-      <tag>waptpro-1.2</tag>
+      <tag>HEAD</tag>
   </scm>
 
   <build>
