@@ -15,7 +15,6 @@
     </license>
   </licenses>
 
-  <groupId>org.jenkins-ci.tools</groupId>
   <artifactId>waptpro</artifactId>
   <packaging>hpi</packaging>
   <version>1.2.8-SNAPSHOT</version>
