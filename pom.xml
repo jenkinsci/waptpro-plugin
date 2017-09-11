@@ -56,21 +56,6 @@
     -->
   </properties>
 
-<distributionManagement>
-    <repository>
-        <id>repo.jenkins-ci.org</id>
-        <name>r-repo.jenkins-ci.org</name>
-        <url>https://repo.jenkins-ci.org/public/</url>
-        <layout>default</layout>
-    </repository>
-    <snapshotRepository>
-        <id>repo.jenkins-ci.org</id>
-        <name>s-repo.jenkins-ci.org</name>
-        <url>https://repo.jenkins-ci.org/public/</url>
-        <layout>default</layout>
-    </snapshotRepository>
-</distributionManagement>
-
   <repositories>
     <repository>
       <id>repo.jenkins-ci.org</id>
