@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>WaptProTarget.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">WAPT Pro plugin</a> &gt; <a href="index.source.html" class="el_package">waptpro</a> &gt; <span class="el_source">WaptProTarget.java</span></div><h1>WaptProTarget.java</h1><pre class="source lang-java linenums">//   Copyright 2016 Softlogica inc.
+//
+//   Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+
+package waptpro;
+
+import hudson.FilePath;
+import hudson.Extension;
+import hudson.model.*;
+import jenkins.tasks.SimpleBuildStep;
+
+import java.io.File;
+import java.io.IOException;
+
+import javax.servlet.ServletException;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.DataBoundConstructor;
+
+public class WaptProTarget extends AbstractDescribableImpl&lt;WaptProTarget&gt; 
+{
+    private final static String reportName = &quot;WAPT Pro Report&quot;;
+    private final String reportsFolder;
+    private final String reportFiles;
+    private final boolean checkTestResult;
+    private final static String wrapperName = &quot;index.html&quot;;
+
+    public WaptProTarget(String reportsFolder, String reportFiles, boolean checkTestResult) 
+<span class="nc" id="L44">    {</span>
+<span class="nc" id="L45">        this.reportsFolder = reportsFolder;</span>
+<span class="nc" id="L46">        this.reportFiles = reportFiles;</span>
+<span class="nc" id="L47">        this.checkTestResult = checkTestResult;</span>
+<span class="nc" id="L48">    }</span>
+
+    public String getReportName() 
+    {
+<span class="nc" id="L52">        return this.reportName;</span>
+    }
+
+    public String getReportsFolder() 
+    {
+<span class="nc" id="L57">        return this.reportsFolder;</span>
+    }
+    
+    public String getReportFiles() 
+    {
+<span class="nc" id="L62">        return this.reportFiles;</span>
+    }
+
+    public boolean getCheckTestResult() 
+    {
+<span class="nc" id="L67">           return this.checkTestResult;</span>
+    }
+
+    public String getSanitizedName() 
+    {
+<span class="nc" id="L72">        String safeName = this.reportsFolder;</span>
+<span class="nc" id="L73">        safeName = safeName.replace(&quot; &quot;, &quot;_&quot;);</span>
+<span class="nc" id="L74">        return safeName;</span>
+    }
+
+    public String getWrapperName() 
+    {
+<span class="nc" id="L79">        return this.wrapperName;</span>
+    }
+
+    public FilePath getArchiveTarget(Run build) 
+    {
+<span class="nc" id="L84">        return new FilePath(getBuildArchiveDir(build));</span>
+    }
+
+    private File getProjectArchiveDir(AbstractItem project) 
+    {
+<span class="nc" id="L89">        return new File(new File(project.getRootDir(), &quot;&quot;), this.getSanitizedName());</span>
+    }
+    /**
+     * Gets the directory where the HTML report is stored for the given build.
+     */
+    private File getBuildArchiveDir(Run run) 
+    {
+<span class="nc" id="L96">        return new File(new File(run.getRootDir(), &quot;archive&quot;), this.getSanitizedName());</span>
+    }
+
+    public class WaptAction implements Action
+    {
+        private final Job&lt;?, ?&gt; project;
+        public WaptProTarget actualWaptProTarget;       
+
+        public WaptAction(Job&lt;?, ?&gt; project, WaptProTarget actualWaptProTarget)
+<span class="nc" id="L105">        {</span>
+<span class="nc" id="L106">            this.actualWaptProTarget = actualWaptProTarget;</span>
+<span class="nc" id="L107">            this.project = project;</span>
+<span class="nc" id="L108">        }</span>
+
+        protected File dir() 
+        {
+<span class="nc" id="L112">            Job job = this.project;</span>
+
+<span class="nc" id="L114">            Run run = job.getLastSuccessfulBuild();</span>
+<span class="nc bnc" id="L115" title="All 2 branches missed.">            if (run != null) </span>
+            {
+<span class="nc" id="L117">                File javadocDir = getBuildArchiveDir(run);</span>
+
+<span class="nc bnc" id="L119" title="All 2 branches missed.">                if (javadocDir.exists()) </span>
+                {
+<span class="nc" id="L121">                    return javadocDir;</span>
+                }
+            }
+
+<span class="nc" id="L125">            return getProjectArchiveDir(this.project);</span>
+        }
+
+        protected String getTitle() 
+        {
+<span class="nc" id="L130">            return this.project.getDisplayName() + &quot; html2&quot;;</span>
+        }
+
+        public String getUrlName() 
+        {
+<span class="nc" id="L135">            return actualWaptProTarget.getSanitizedName();</span>
+        }
+
+        public String getDisplayName() 
+        {
+<span class="nc" id="L140">            String action = actualWaptProTarget.reportName;</span>
+<span class="nc bnc" id="L141" title="All 2 branches missed.">            return dir().exists() ? action : null;</span>
+        }
+
+        public String getIconFileName()
+        {
+<span class="nc bnc" id="L146" title="All 2 branches missed.">            return dir().exists() ? &quot;/plugin/waptpro/waptpro.png&quot; : null;</span>
+        }
+        
+        public void doDynamic(StaplerRequest req, StaplerResponse rsp) throws IOException, ServletException 
+        {
+<span class="nc" id="L151">            DirectoryBrowserSupport dbs = new DirectoryBrowserSupport(this, new FilePath(this.dir()), this.getTitle(), this.getIconFileName(), false);</span>
+<span class="nc" id="L152">            dbs.setIndexFileName(actualWaptProTarget.getReportFiles()); // Hudson &gt;= 1.312</span>
+<span class="nc" id="L153">            dbs.generateResponse(req, rsp, this);</span>
+<span class="nc" id="L154">        }    </span>
+    }
+
+    public class WaptBuildAction implements Action, SimpleBuildStep.LastBuildAction
+    {
+        private final Run&lt;?, ?&gt; build;
+        private final List&lt;WaptAction&gt; projectActions;
+
+        public WaptBuildAction(Run&lt;?, ?&gt; build, WaptProTarget actualWaptProTarget) 
+<span class="nc" id="L163">        {       </span>
+<span class="nc" id="L164">            this.build = build;</span>
+       
+<span class="nc" id="L166">            List&lt;WaptAction&gt; projectActions = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L167">            projectActions.add(new WaptAction(build.getParent(), actualWaptProTarget));</span>
+<span class="nc" id="L168">            this.projectActions = projectActions;</span>
+<span class="nc" id="L169">        }</span>
+        
+        public final Run&lt;?,?&gt; getBuild() 
+        {
+<span class="nc" id="L173">            return build;</span>
+        }
+
+        public String getUrlName() 
+        {
+<span class="nc" id="L178">            return projectActions.get(0).getUrlName();</span>
+        }
+
+        public String getDisplayName() 
+        {
+<span class="nc" id="L183">            return projectActions.get(0).getDisplayName();</span>
+        }
+
+        public String getIconFileName() 
+        {
+<span class="nc bnc" id="L188" title="All 2 branches missed.">            return dir().exists() ? &quot;/plugin/waptpro/waptpro.png&quot; : null;</span>
+        }
+        
+        protected String getTitle() 
+        {
+<span class="nc" id="L193">            return this.build.getDisplayName();</span>
+        }
+
+        protected File dir() 
+        {
+<span class="nc" id="L198">            return getBuildArchiveDir(this.build);</span>
+        }
+
+        @Override
+        public Collection&lt;? extends Action&gt; getProjectActions() {
+<span class="nc" id="L203">            return this.projectActions;</span>
+        }        
+                
+        public void doDynamic(StaplerRequest req, StaplerResponse rsp) throws IOException, ServletException 
+        {         
+<span class="nc" id="L208">            DirectoryBrowserSupport dbs = new DirectoryBrowserSupport(this, new FilePath(this.dir()), this.getTitle(), this.getIconFileName(), false);</span>
+                    
+<span class="nc" id="L210">            String reportFileName = projectActions.get(0).actualWaptProTarget.getReportFiles();</span>
+                    
+<span class="nc" id="L212">            dbs.setIndexFileName(reportFileName); // Hudson &gt;= 1.312       </span>
+<span class="nc" id="L213">            dbs.generateResponse(req, rsp, this);</span>
+<span class="nc" id="L214">        }  </span>
+    }
+
+    public void handleAction(Run&lt;?, ?&gt; build) 
+    {
+<span class="nc" id="L219">        build.addAction(new WaptBuildAction(build, this));</span>
+<span class="nc" id="L220">    }</span>
+
+    public Action getProjectAction(Job project) 
+    {
+<span class="nc" id="L224">        return new WaptAction(project, this);</span>
+    }
+
+    @Extension
+<span class="fc" id="L228">    public static class DescriptorImpl extends Descriptor&lt;WaptProTarget&gt; </span>
+    {
+<span class="fc" id="L230">        public String getDisplayName() { return &quot;&quot;; }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span></div></body></html>

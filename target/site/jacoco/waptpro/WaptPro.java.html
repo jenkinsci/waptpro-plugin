@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>WaptPro.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">WAPT Pro plugin</a> &gt; <a href="index.source.html" class="el_package">waptpro</a> &gt; <span class="el_source">WaptPro.java</span></div><h1>WaptPro.java</h1><pre class="source lang-java linenums">//   Copyright 2016 Softlogica inc.
+//
+//   Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+
+package waptpro;
+
+import hudson.Extension;
+import hudson.FilePath;
+import hudson.Launcher;
+import hudson.Util;
+import hudson.matrix.MatrixConfiguration;
+import hudson.matrix.MatrixProject;
+import hudson.model.*;
+import hudson.tasks.BuildStepDescriptor;
+import hudson.tasks.BuildStepMonitor;
+import hudson.tasks.Publisher;
+import hudson.tasks.Recorder;
+import hudson.util.FormValidation;
+import jenkins.tasks.SimpleBuildStep;
+import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
+
+import javax.servlet.ServletException;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
+public class WaptPro extends Recorder implements SimpleBuildStep {
+    private final WaptProTarget reportTarget;
+
+    @DataBoundConstructor
+<span class="nc" id="L45">    public WaptPro(String reportsFolder, String reportFiles, boolean checkTestResult) {</span>
+<span class="nc" id="L46">        this.reportTarget = new WaptProTarget(reportsFolder, reportFiles, checkTestResult);</span>
+<span class="nc" id="L47">    }</span>
+          
+    public WaptProTarget getReportTarget() {
+<span class="nc" id="L50">        return this.reportTarget;</span>
+    }
+    
+    public String getReportFiles() {
+<span class="nc" id="L54">        return this.reportTarget.getReportFiles();</span>
+    }
+
+    public boolean getCheckTestResult() {
+<span class="nc" id="L58">           return this.reportTarget.getCheckTestResult();</span>
+    }
+    
+    public String getReportsFolder() {
+<span class="nc" id="L62">        return this.reportTarget.getReportsFolder();</span>
+    }
+    
+    private static void writeFile(ArrayList&lt;String&gt; lines, File path) throws IOException {
+<span class="nc" id="L66">        final OutputStream is = new FileOutputStream(path);</span>
+        
+        try{
+<span class="nc" id="L69">            final Writer r = new OutputStreamWriter(is, &quot;UTF-8&quot;);</span>
+
+<span class="nc" id="L71">            BufferedWriter bw = new BufferedWriter(r);</span>
+<span class="nc bnc" id="L72" title="All 2 branches missed.">            for (int i = 0; i &lt; lines.size(); i++) {</span>
+<span class="nc" id="L73">                bw.write(lines.get(i));</span>
+<span class="nc" id="L74">                bw.newLine();</span>
+            }
+<span class="nc" id="L76">            bw.close();</span>
+        }finally {
+<span class="nc" id="L78">            try {</span>
+<span class="nc" id="L79">                is.close();</span>
+<span class="nc" id="L80">            } catch (IOException e) {</span>
+<span class="nc" id="L81">                e.printStackTrace();</span>
+<span class="nc" id="L82">            }</span>
+<span class="nc" id="L83">        }</span>
+<span class="nc" id="L84">    }</span>
+
+    public ArrayList&lt;String&gt; readFile(String filePath) throws java.io.FileNotFoundException,
+            java.io.IOException {
+<span class="nc" id="L88">        ArrayList&lt;String&gt; aList = new ArrayList&lt;String&gt;();</span>
+
+        try {
+<span class="nc" id="L91">            final InputStream is = this.getClass().getResourceAsStream(filePath);</span>
+            try {
+<span class="nc" id="L93">                final Reader r = new InputStreamReader(is, &quot;UTF-8&quot;);</span>
+                try {
+<span class="nc" id="L95">                    final BufferedReader br = new BufferedReader(r);</span>
+                    try {
+<span class="nc" id="L97">                        String line = null;</span>
+<span class="nc bnc" id="L98" title="All 2 branches missed.">                        while ((line = br.readLine()) != null) {</span>
+<span class="nc" id="L99">                            aList.add(line);</span>
+                        }
+<span class="nc" id="L101">                        br.close();</span>
+<span class="nc" id="L102">                        r.close();</span>
+<span class="nc" id="L103">                        is.close();</span>
+                    } finally {
+<span class="nc" id="L105">                        try {</span>
+<span class="nc" id="L106">                            br.close();</span>
+<span class="nc" id="L107">                        } catch (IOException e) {</span>
+<span class="nc" id="L108">                            e.printStackTrace();</span>
+<span class="nc" id="L109">                        }</span>
+<span class="nc" id="L110">                    }</span>
+                } finally {
+<span class="nc" id="L112">                    try {</span>
+<span class="nc" id="L113">                        r.close();</span>
+<span class="nc" id="L114">                    } catch (IOException e) {</span>
+<span class="nc" id="L115">                        e.printStackTrace();</span>
+<span class="nc" id="L116">                    }</span>
+<span class="nc" id="L117">                }</span>
+            } finally {
+<span class="nc" id="L119">                try {</span>
+<span class="nc" id="L120">                    is.close();</span>
+<span class="nc" id="L121">                } catch (IOException e) {</span>
+<span class="nc" id="L122">                    e.printStackTrace();</span>
+<span class="nc" id="L123">                }</span>
+<span class="nc" id="L124">            }</span>
+<span class="nc" id="L125">        } catch (IOException e) {</span>
+            // failure
+<span class="nc" id="L127">            e.printStackTrace();</span>
+<span class="nc" id="L128">        }</span>
+
+<span class="nc" id="L130">        return aList;</span>
+    }
+
+    protected static String resolveParametersInString(Run&lt;?, ?&gt; build, TaskListener listener, String input) {
+        try {
+<span class="nc" id="L135">            return build.getEnvironment(listener).expand(input);</span>
+<span class="nc" id="L136">        } catch (Exception e) {</span>
+<span class="nc" id="L137">            listener.getLogger().println(&quot;Failed to resolve parameters in string \&quot;&quot;+</span>
+<span class="nc" id="L138">            input+&quot;\&quot; due to following error:\n&quot;+e.getMessage());</span>
+        }
+<span class="nc" id="L140">        return input;</span>
+    }
+    
+    protected ArrayList&lt;String&gt; readLines(String filename) throws IOException 
+    {  
+<span class="nc" id="L145">        ArrayList&lt;String&gt; lines = new ArrayList&lt;String&gt;();</span>
+        
+        try {
+<span class="nc" id="L148">            final InputStream is = new FileInputStream(filename);</span>
+        
+            try{
+<span class="nc" id="L151">                final Reader r = new InputStreamReader(is, &quot;UTF-8&quot;);</span>
+
+<span class="nc" id="L153">                BufferedReader bufferedReader = new BufferedReader(r);</span>
+
+<span class="nc" id="L155">                String line = null;</span>
+<span class="nc bnc" id="L156" title="All 2 branches missed.">                while ((line = bufferedReader.readLine()) != null)</span>
+                {
+<span class="nc" id="L158">                    lines.add(line);</span>
+                }
+<span class="nc" id="L160">                bufferedReader.close();</span>
+            } finally {
+<span class="nc" id="L162">                try {</span>
+<span class="nc" id="L163">                    is.close();</span>
+<span class="nc" id="L164">                } catch (IOException e) {</span>
+<span class="nc" id="L165">                    e.printStackTrace();</span>
+<span class="nc" id="L166">                }</span>
+<span class="nc" id="L167">            }</span>
+<span class="nc" id="L168">        } catch (IOException e) {</span>
+            // failure
+<span class="nc" id="L170">            e.printStackTrace();</span>
+<span class="nc" id="L171">        }</span>
+        
+<span class="nc" id="L173">        return lines;</span>
+    }
+    
+    @Override
+    public void perform(Run&lt;?, ?&gt; build, FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException
+    {
+<span class="nc" id="L179">        listener.getLogger().println(&quot;WAPT Pro Plugin &gt; Processing WAPT Pro output files...&quot;);</span>
+            
+        {
+            // Create an array of lines we will eventually write out, initially the header.
+<span class="nc" id="L183">            WaptProTarget reportTarget = getReportTarget(); </span>
+<span class="nc" id="L184">            FilePath targetDir = reportTarget.getArchiveTarget(build);</span>
+         
+             // The index name might be a comma separated list of names, so let's figure out all the pages we should index.
+<span class="nc" id="L187">            String report = reportTarget.getReportFiles();</span>
+<span class="nc" id="L188">            report = report.trim();          </span>
+
+<span class="nc bnc" id="L190" title="All 2 branches missed.">            if(!report.endsWith(&quot;.html&quot;))</span>
+            {
+<span class="nc" id="L192">                report += &quot;.html&quot;;</span>
+            }
+
+<span class="nc bnc" id="L195" title="All 2 branches missed.">            if(getCheckTestResult())</span>
+            {                
+<span class="nc" id="L197">                listener.getLogger().println(&quot;WAPT Pro Plugin &gt; Check test result in &quot; + targetDir + &quot;\\&quot; + report + &quot; report file&quot;);</span>
+
+                ArrayList&lt;String&gt; reportStrings;
+                try
+                {
+<span class="nc" id="L202">                    reportStrings = readLines(targetDir + &quot;\\&quot; + report);</span>
+                }
+<span class="nc" id="L204">                catch(IOException e)</span>
+                {
+<span class="nc" id="L206">                    Util.displayIOException(e, listener);</span>
+<span class="nc" id="L207">                    e.printStackTrace(listener.fatalError(&quot;WAPT Pro failure&quot;));</span>
+<span class="nc" id="L208">                    build.setResult(Result.FAILURE);</span>
+<span class="nc" id="L209">                    return;                    </span>
+<span class="nc" id="L210">                }</span>
+
+<span class="nc" id="L212">                boolean resultFound = false;</span>
+<span class="nc bnc" id="L213" title="All 2 branches missed.">                for(int reportStrNum=0; reportStrNum&lt;reportStrings.size(); reportStrNum++)</span>
+                {                  
+<span class="nc bnc" id="L215" title="All 2 branches missed.">                    if(reportStrings.get(reportStrNum).contains(&quot;meta name='TestResult' content='FAILURE'&quot;))</span>
+                    {
+<span class="nc" id="L217">                        listener.getLogger().println(&quot;WAPT Pro Plugin &gt; Test result is FAILURE&quot;);</span>
+<span class="nc" id="L218">                        build.setResult(Result.FAILURE);  </span>
+<span class="nc" id="L219">                        resultFound = true;</span>
+<span class="nc" id="L220">                        break;</span>
+                    }                  
+<span class="nc bnc" id="L222" title="All 2 branches missed.">                    if(reportStrings.get(reportStrNum).contains(&quot;meta name='TestResult' content='SUCCESS'&quot;))</span>
+                    {
+<span class="nc" id="L224">                        listener.getLogger().println(&quot;WAPT Pro Plugin &gt; Test result is SUCCESS&quot;);</span>
+<span class="nc" id="L225">                        build.setResult(Result.SUCCESS);</span>
+<span class="nc" id="L226">                        resultFound = true;</span>
+<span class="nc" id="L227">                        break;</span>
+                    }
+                }
+
+<span class="nc bnc" id="L231" title="All 2 branches missed.">                if(!resultFound)</span>
+                {
+<span class="nc" id="L233">                    listener.getLogger().println(&quot;WAPT Pro Plugin &gt; Test result was not found&quot;);</span>
+<span class="nc" id="L234">                    build.setResult(Result.FAILURE); </span>
+                }
+            }
+ 
+//            String levelString = &quot;BUILD&quot;; 
+//            listener.getLogger().println(&quot;WAPT Pro Plugin &gt; Archiving at &quot; + levelString + &quot; level &quot; + archiveDir + &quot; to &quot; + targetDir);
+            
+<span class="nc" id="L241">            reportTarget.handleAction(build);             </span>
+        }
+<span class="nc" id="L243">    }</span>
+
+    /*
+    @Override
+    public Collection&lt;? extends Action&gt; getProjectActions(AbstractProject&lt;?, ?&gt; project) 
+    {      
+        ArrayList&lt;Action&gt; actions = new ArrayList&lt;Action&gt;();
+        WaptProTarget target = this.reportTarget; 
+
+        actions.add(target.getProjectAction(project));
+        if (project instanceof MatrixProject &amp;&amp; ((MatrixProject) project).getActiveConfigurations() != null){
+            for (MatrixConfiguration mc : ((MatrixProject) project).getActiveConfigurations()){
+                try {               
+                  mc.onLoad(mc.getParent(), mc.getName());
+                }
+                catch (IOException e){
+                    //Could not reload the configuration.
+                }
+            }
+        }
+
+        return actions;
+    }
+*/
+    @Extension
+<span class="fc" id="L268">    public static class DescriptorImpl extends BuildStepDescriptor&lt;Publisher&gt; {</span>
+        @Override
+        public String getDisplayName() {
+            // return Messages.JavadocArchiver_DisplayName();
+<span class="fc" id="L272">            return &quot;Publish WAPT Pro reports&quot;;</span>
+        }
+
+        /**
+         * Performs on-the-fly validation on the file mask wildcard.
+         */
+        public FormValidation doCheck(@AncestorInPath AbstractProject project,
+                @QueryParameter String value) throws IOException, ServletException {
+<span class="nc" id="L280">            return FormValidation.ok();</span>
+        }
+
+        @Override
+        public boolean isApplicable(Class&lt;? extends AbstractProject&gt; jobType) {
+<span class="nc" id="L285">            return true;</span>
+        }
+    }
+
+    public BuildStepMonitor getRequiredMonitorService() {
+<span class="nc" id="L290">        return BuildStepMonitor.NONE;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span></div></body></html>

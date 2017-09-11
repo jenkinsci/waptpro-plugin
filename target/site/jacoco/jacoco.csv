@@ -1,0 +1,10 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+WAPT Pro plugin,waptpro,WaptProTarget.WaptAction,95,0,8,0,20,0,11,0,7,0
+WAPT Pro plugin,waptpro,WaptProStepExecution,68,0,0,0,14,0,3,0,3,0
+WAPT Pro plugin,waptpro,WaptProTarget.DescriptorImpl,0,5,0,0,0,2,0,2,0,2
+WAPT Pro plugin,waptpro,WaptProStep.DescriptorImpl,37,5,2,0,8,2,4,2,3,2
+WAPT Pro plugin,waptpro,WaptPro.DescriptorImpl,4,5,0,0,2,2,2,2,2,2
+WAPT Pro plugin,waptpro,WaptPro,386,0,18,0,110,0,20,0,11,0
+WAPT Pro plugin,waptpro,WaptProStep,27,0,0,0,9,0,5,0,5,0
+WAPT Pro plugin,waptpro,WaptProTarget.WaptBuildAction,96,0,2,0,18,0,10,0,9,0
+WAPT Pro plugin,waptpro,WaptProTarget,86,0,0,0,19,0,12,0,12,0
