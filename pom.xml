@@ -17,7 +17,7 @@
 
   <artifactId>waptpro</artifactId>
   <packaging>hpi</packaging>
-  <version>1.5</version>
+  <version>1.6-SNAPSHOT</version>
   <name>WAPT Pro plugin</name>
   <url>http://wiki.jenkins-ci.org/display/JENKINS/WAPT+Pro+plugin</url>
 
@@ -38,7 +38,7 @@
       <connection>scm:git:git://github.com/jenkinsci/waptpro-plugin.git</connection>
       <developerConnection>scm:git:git@github.com:jenkinsci/waptpro-plugin.git</developerConnection>
       <url>https://github.com/jenkinsci/waptpro-plugin</url>
-      <tag>waptpro-1.5</tag>
+      <tag>HEAD</tag>
   </scm>
 
  <properties>
